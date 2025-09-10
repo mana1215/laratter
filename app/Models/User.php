@@ -17,6 +17,10 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+      public function likes()
+  {
+      return $this->belongsToMany(Tweet::class)->withTimestamps();
+  }
     protected $fillable = [
         'name',
         'email',
@@ -45,4 +49,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function tweets()
+  {
+    return $this->hasMany(Tweet::class);
+  }
+    
 }
