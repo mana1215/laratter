@@ -15,6 +15,7 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->user()->id;
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -24,7 +25,10 @@ class ProfileUpdateRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
+
             ],
+            'bio'    => ['nullable','string','max:2000'],
+            'avatar' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:5120'],
         ];
     }
 }

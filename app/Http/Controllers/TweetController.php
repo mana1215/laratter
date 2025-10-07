@@ -7,19 +7,17 @@ use Illuminate\Http\Request;
 
 class TweetController extends Controller
 {
-
-    
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
-         $tweets = Tweet::with(['user', 'liked'])->latest()->get();
+        $tweets = Tweet::with(['user', 'liked'])   // ← ユーザー＆いいねを同時読み込み
+            ->withCount('reposts')                // ← リポスト数も取得
+            ->latest()
+            ->paginate(10);                       // ← ページネーション推奨
 
-            $tweets = Tweet::with('user')->latest()->get();
-    return view('tweets.index', compact('tweets'));
-
+        return view('tweets.index', compact('tweets'));
     }
 
     /**
@@ -27,7 +25,6 @@ class TweetController extends Controller
      */
     public function create()
     {
-        //
         return view('tweets.create');
     }
 
@@ -36,14 +33,13 @@ class TweetController extends Controller
      */
     public function store(Request $request)
     {
-            $request->validate([
-      'tweet' => 'required|max:255',
-    ]);
+        $request->validate([
+            'tweet' => 'required|max:255',
+        ]);
 
-    $request->user()->tweets()->create($request->only('tweet'));
+        $request->user()->tweets()->create($request->only('tweet'));
 
-    return redirect()->route('tweets.index');
-        //
+        return redirect()->route('tweets.index');
     }
 
     /**
@@ -51,8 +47,9 @@ class TweetController extends Controller
      */
     public function show(Tweet $tweet)
     {
+        // 投稿詳細でもユーザー＆コメントのユーザーを一括読み込み
+        $tweet->load(['user', 'comments.user']);
         return view('tweets.show', compact('tweet'));
-        //
     }
 
     /**
@@ -61,7 +58,6 @@ class TweetController extends Controller
     public function edit(Tweet $tweet)
     {
         return view('tweets.edit', compact('tweet'));
-        //
     }
 
     /**
@@ -69,14 +65,13 @@ class TweetController extends Controller
      */
     public function update(Request $request, Tweet $tweet)
     {
-            $request->validate([
-      'tweet' => 'required|max:255',
-    ]);
+        $request->validate([
+            'tweet' => 'required|max:255',
+        ]);
 
-    $tweet->update($request->only('tweet'));
+        $tweet->update($request->only('tweet'));
 
-    return redirect()->route('tweets.show', $tweet);
-        //
+        return redirect()->route('tweets.show', $tweet);
     }
 
     /**
@@ -84,9 +79,25 @@ class TweetController extends Controller
      */
     public function destroy(Tweet $tweet)
     {
-            $tweet->delete();
+        $tweet->delete();
 
-    return redirect()->route('tweets.index');
-        //
+        return redirect()->route('tweets.index');
+    }
+
+    /**
+     * Search for tweets containing the keyword.
+     */
+    public function search(Request $request)
+    {
+        $query = Tweet::query()->with('user');  // ← 検索結果にもアイコンを出すために eager load
+
+        if ($request->filled('keyword')) {
+            $query->where('tweet', 'like', '%' . $request->keyword . '%');
+        }
+
+        $tweets = $query->latest()->paginate(10);
+
+        return view('tweets.search', compact('tweets'));
     }
 }
+

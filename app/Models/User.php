@@ -9,6 +9,23 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+
+      // 🔽 1対多の関係
+
+    public function follows()
+  {
+    return $this->belongsToMany(User::class, 'follows', 'follow_id', 'follower_id');
+  }
+
+  public function followers()
+  {
+    return $this->belongsToMany(User::class, 'follows', 'follower_id', 'follow_id');
+  }
+  public function comments()
+  {
+    return $this->hasMany(Comment::class);
+  }
+  
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
@@ -25,6 +42,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'bio', 
+        'avatar_path',
     ];
 
     /**
@@ -53,5 +72,16 @@ class User extends Authenticatable
   {
     return $this->hasMany(Tweet::class);
   }
-    
+    // app/Models/User.php の中に追記
+    public function reposts(){ return $this->hasMany(\App\Models\Repost::class); }
+
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute()
+{
+    return $this->avatar_path
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar_path)
+        : 'https://placehold.co/120x120?text=User';
+}
+
 }

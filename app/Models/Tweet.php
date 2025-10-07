@@ -16,8 +16,17 @@ class Tweet extends Model
     use HasFactory;
       protected $fillable = ['tweet'];
 
+        // 🔽 1対多の関係
+  public function comments()
+  {
+    return $this->hasMany(Comment::class)->orderBy('created_at', 'desc');
+  }
+
   public function user()
   {
     return $this->belongsTo(User::class);
   }
+  // app/Models/Tweet.php の中に追記
+  public function reposts(){ return $this->hasMany(\App\Models\Repost::class); }
+
 }
